@@ -83,7 +83,11 @@
 										<li>
 											<ul>
 												<li class="time"><h2>
+<<<<<<< HEAD
 														<?php print date("g:i a", strtotime($result->departure_departure_time)); ?>
+=======
+														<?php print $result->departure_departure_time; ?>
+>>>>>>> e0fba5c24269722bb29dafd2c52af0193f74fb56
 													</h2></li>
 												<li class="location"><h6>
 														Depart from
@@ -94,7 +98,7 @@
 												
 												</li>
 												<li class="cost"><h6>
-														<?php (isset($result->num_transfers) ? print $result->first_leg_price : print $result->price); ?>
+														<?php (isset($result->num_transfers) ? print '$' . $result->first_leg_price : print $result->price); ?>
 													</h6></li>
 												<li class="transporter"><a target="_blank"
 													href="<?php print $result->departure_agency_url; ?>"><?php print stripslashes($result->departure_agency_name); ?>
@@ -122,7 +126,7 @@
 												<ul>
 													<li class="time"><h2><?php print date("g:i a", strtotime($result->destination_transfer_arrival_time)); ?></h2></li>
 													<li class="location"><h6>Depart from <?php print $result->to_stop_name; ?></h6></li>
-													<li class="cost"><h6><?php print $result->second_leg_price; ?></h6></li>
+													<li class="cost"><h6><?php print '$' . $result->second_leg_price; ?></h6></li>
 													<li class="transporter">
 														<a href="<?php print $result->destination_agency_url; ?>"><?php print stripslashes($result->destination_agency_name); ?> <i class="icon-external-link"></i></a>
 														<p><?php print $result->destination_agency_phone; ?>
@@ -277,7 +281,7 @@
 												<ul>
 													<li class="time"><h2><?php print date("g:i a", strtotime($result->destination_transfer_arrival_time)); ?></h2></li>
 													<li class="location"><h6>Depart from <?php print $result->to_stop_name; ?></h6></li>
-													<li class="cost"><h6><?php print $result->second_leg_price; ?></h6></li>
+													<li class="cost"><h6><?php print '$' . $result->second_leg_price; ?></h6></li>
 													<li class="transporter">
 														<a href="<?php print $result->destination_agency_url; ?>"><?php print stripslashes($result->destination_agency_name); ?> <i class="icon-external-link"></i></a>
 														<p><?php print $result->destination_agency_phone; ?>
