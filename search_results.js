@@ -1,6 +1,5 @@
 (function( $ ) {
 	$( document ).ready(function(){
-<<<<<<< HEAD
 		//get search terms and convert cities to validation format
 		var search = window.location.pathname.replace("/gtfs_search/", "").split("/");
 		var depart = search[0] + ' (' + search[1] + ')';
@@ -35,7 +34,6 @@
 		function loadResults(){
 			url = window.location.pathname;
 			url = url.replace('gtfs_search', 'gtfs_query');
-			
 			$.get(url).done(function(data){
 				$('.left-col').html(data);
 			}).fail(function(data){
@@ -75,7 +73,9 @@
 			newUrl = '/gtfs_search/' + urlArray.join('/');
 			location.href = newUrl;
 		});
-=======
+
+		/*
+		// Resolve Merge Conflict
 		var spinner = '<div id="spinner"><h2>Loading Search Results</h2><img src="/sites/all/themes/atlantica/img/spinner.gif"></div>';
 		$('.left-col').html(spinner);
 		
@@ -96,6 +96,6 @@
 			});
 			
 		})
->>>>>>> e0fba5c24269722bb29dafd2c52af0193f74fb56
+*/
 	});
 })(jq1110);

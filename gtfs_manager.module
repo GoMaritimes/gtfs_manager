@@ -26,7 +26,7 @@ function gtfs_manager_init() {
 * Add javascript links to all pages
 */
 function gtfs_manager_preprocess_page(&$vars) {
-	drupal_add_js('http://maps.google.com/maps/api/js?sensor=false', 'external');
+	drupal_add_js('http://maps.google.com/maps/api/js?key=AIzaSyATQaxWKZPIufNWd7dB7_GjMR3A-UPgwwA', 'external');
 	drupal_add_js(  drupal_get_path('module', 'gtfs_manager')  . '/search_form_theme.js');
 }
 
@@ -531,6 +531,40 @@ function gtfs_manager_menu() {
 			'file' => 'trip.pages.inc',
 	);
 
+	//Add a trip to a route
+	$items['trip/%trip/stop_times/add'] = array(
+			'title callback' => t('Add stop times to trip'),
+			'title arguments' => array(1),
+			'page callback' => 'drupal_get_form',
+			'page arguments' => array('gtfs_manager_stop_time_form', entity_get_controller('stop_time')->create(), 1),
+			'weight' => 1,
+			'menu_name' => 'gtfs_manager',
+			'access arguments' => array('administer gtfs'),
+			'file' => 'stop_time.pages.inc',
+	);
+
+	//Edit stop time
+	$items['trip/%trip/stop_time/%stop'] = array(
+			'title' => t('Edit stop time'),
+			'page callback' => 'stop_time_page_edit',
+			'page arguments' => array(1, 3),
+			'weight' => 1,
+			'menu_name' => 'gtfs_manager',
+			'access arguments' => array('administer gtfs'),
+			'file' => 'stop_time.pages.inc',
+	);
+
+	$items['trip/%trip/stop/%stop/delete'] = array(
+			'title' => 'Delete',
+			'page callback' => 'drupal_get_form',
+			'page arguments' => array('stop_time_delete_confirm', 1, 3),
+			'access arguments' => array('administer gtfs'),
+			'weight' => 1,
+			'type' => MENU_LOCAL_TASK,
+			'context' => MENU_CONTEXT_INLINE,
+			'file' => 'stop_time.pages.inc',
+	);
+
 	$items['route/%route/trips'] = array(
 			'title callback' => 'trip_page_title',
 			'title arguments' => array(1),
@@ -539,41 +573,6 @@ function gtfs_manager_menu() {
 			'access callback' => TRUE,
 			'file' => 'trip.pages.inc',
 	);
-
-	/*
-	//Add a stop for given route
-	$items['route/%route/stop/add'] = array(
-			'title callback' => t('New Stop'),
-			'title arguments' => array(1),
-			'page callback' => 'drupal_get_form',
-			'page arguments' => array('gtfs_manager_stop_form',
-					entity_get_controller('stop')->create(), 1),
-			'weight' => 1,
-			'menu_name' => 'gtfs_manager',
-			'access arguments' => array('administer gtfs'),
-			'file' => 'stop.pages.inc',
-	);
-
-	//Show and agencies routes
-	$items['route/%route/stops'] = array(
-			'title callback' => 'route_page_title',
-			'title arguments' => array(1),
-			'page callback' => 'gtfs_manager_route_stops_view',
-			'page arguments' => array(1),
-			'access callback' => TRUE,
-			'file' => 'stop.pages.inc',
-	);
-
-	//Upload route stops
-	$items['route/%route/upload'] = array(
-			'title' => t('Upload Stops'),
-			'page callback' => 'drupal_get_form',
-			'page arguments' => array('gtfs_manager_route_stops_upload_form', 1),
-			'access arguments' => array('administer gtfs'),
-			'menu_name' => 'gtfs_manager',
-			'file' => 'stop.pages.inc',
-	);
-	*/
 
 	//Add a feature for a given route
 	$items['agency/%agency/route/%route/feature/add'] = array(
@@ -599,6 +598,28 @@ function gtfs_manager_menu() {
 			'weight' => 0,
 			'type' => MENU_LOCAL_TASK,
 			'context' => MENU_CONTEXT_PAGE | MENU_CONTEXT_INLINE,
+			'file' => 'stop.pages.inc',
+	);
+
+	// Add stop
+	$items['stop/add'] = array(
+			'title' => t('Add a new stop'),
+			'title callback' => 'check_plain',
+			'page callback' => 'drupal_get_form',
+			'page arguments' => array('gtfs_manager_stop_form', entity_get_controller('stop')->create()),
+			'weight' => 1,
+			'menu_name' => 'gtfs_manager',
+			'access arguments' => array('administer gtfs'),
+			'file' => 'stop.pages.inc',
+	);
+
+	//Show and agencies routes
+	$items['stops'] = array(
+			'title callback' => t('Showing all stops'),
+			'title arguments' => 'check_plain',
+			'page callback' => 'gtfs_manager_stops_view',
+			'page arguments' => array(1),
+			'access callback' => TRUE,
 			'file' => 'stop.pages.inc',
 	);
 
@@ -721,16 +742,6 @@ function gtfs_manager_menu() {
 			'type' => MENU_NORMAL_ITEM,
 			'file' => 'transportation_type.pages.inc',
 	);
-
-	/*/Transfer report
-	$items['admin/config/gtfs_manager/transfer/add'] = array(
-			'title' => 'Select Transfers',
-			'description' => 'Review and add transfer suggestions',
-			'page callback' => 'drupal_get_form',
-			'page arguments' => array('gtfs_manager_transfer_form', gtfs_manager_suggest_transfers()),
-			'access arguments' => array('administer gtfs'),
-			'type' => MENU_NORMAL_ITEM,
-	);*/
 	
 	$items['admin/config/gtfs_manager/transfer'] = array(
 			'title' => 'Transfers',
@@ -1719,22 +1730,21 @@ function template_preprocess_gtfs_manager_route_detail(&$variables) {
  * @param &$variables a reference to varables provided by theme_hook()
  */
 function template_preprocess_gtfs_manager_route_trips_view(&$variables) {
-  foreach ($variables['trips'] as $trip) {
-    $trip->links[] = l('View', 'trip/' . $trip->tid);
+	$variables['links'] = array();
+	$variables['links'][] =  l('Back to route','agency/' . $variables['route']->aid . '/routes');
+
+	if (user_access('administer gtfs')) {
+	      $variables['links'][] = l('Add another trip', 'route/' . $variables['route']->rid . '/trip/add');
+	  }
+  
+  	foreach ($variables['trips'] as $trip) {
+    	$trip->links[] = l('View', 'trip/' . $trip->tid);
     
-    if (user_access('administer gtfs')) {
-      $trip->links[] = l('Edit', 'trip/' . $trip->tid . '/edit');
-      $trip->links[] = l('Add Stops', 'stop/' . $trip->tid . '/add');
-    }
-    
-    $variables['links'] = array();
-    
-    $variables['links'][] =  l('Back to route','agency/' . $variables['route']->aid . '/routes');
-    
-    if (user_access('administer gtfs')) {
-      $variables['links'][] = l('Add another trip', 'route/' . $variables['route']->rid . '/trip/add');
-    }
-  }
+	    if (user_access('administer gtfs')) {
+	      $trip->links[] = l('Edit', 'trip/' . $trip->tid . '/edit');
+	      $trip->links[] = l('Add Stop Times', 'trip/' . $trip->tid . '/stop_times/add');
+	    }
+  	}
 }
 
 
@@ -2163,12 +2173,12 @@ function gtfs_manager_agency_routes_view($aid) {
 function gtfs_manager_show_stop_detail($tid) {
 	$query = 'select * from trips t'
 			. ' join stop_times st'
-					. ' on st.tid = t.tid'
-							. ' join stops s'
-									. ' on s.sid = st.sid'
-											. ' join calendar c '
-													. ' on c.service_id = t.service_id '
-															. ' where t.tid = :trip_id';
+			. ' on st.tid = t.tid'
+			. ' join stops s'
+			. ' on s.sid = st.sid'
+			. ' join calendar c '
+			. ' on c.service_id = t.service_id '
+			. ' where t.tid = :trip_id';
 
 	$result = db_query($query, array(':trip_id' => $tid));
 
@@ -2409,22 +2419,22 @@ function calendar_date_save($calendar_date) {
  *
  * @return an array of stop time objects indexed by id.
  */
-function stop_time_load_multiple($tids = array(), $conditions = array(), $reset = FALSE) {
-	return entity_load('stop_time', $tids, $conditions, $reset);
+function stop_time_load_multiple($ids = array(), $conditions = array(), $reset = FALSE) {
+	return entity_get_controller('stop_time')->getStopTimes($ids);
 }
 
 /**
  * Load stop time object from the database
- * @param $id the stop id and trip id
+ * @param $ids associative array with sid and tid
  * @param $reset whether to reset the cache
  *
- * @return a fully populated stop object
+ * @return a fully populated stop time object
  */
-function stop_time_load($tid = null, $reset = FALSE) {
-	$tids = (isset($tid) ? array($tid) : array());
+function stop_time_load($ids = null, $reset = FALSE) {
+	$all_ids = (isset($ids) ? array($ids) : array());
 	$conditions = array();
-	$stop_time = route_load_multiple($ids, $conditions, $reset);
-	return $stop_time ? reset($stop_time) : FALSE;
+	$stop_time = stop_time_load_multiple($all_ids, $conditions, $reset);
+	return $stop_time;
 }
 
 /**
@@ -2500,7 +2510,7 @@ function trip_load_multiple($tids = array(), $conditions = array(), $reset = FAL
 function trip_load($tid = null, $reset = FALSE) {
 	$tids = (isset($tid) ? array($tid) : array());
 	$conditions = array();
-	$trip = route_load_multiple($tids, $conditions, $reset);
+	$trip = trip_load_multiple($tids, $conditions, $reset);
 	return $trip ? reset($trip) : FALSE;
 }
 
@@ -2560,7 +2570,7 @@ function trip_save($trip) {
  * @return an array of stop objects indexed by sid.
  */
 function stop_load_multiple($sids = array(), $conditions = array(), $reset = FALSE) {
-	return entity_get_controller('stop')->getStops($sids, $conditions);
+	return entity_load('stop', $sids, $conditions, $reset);
 }
 
 /**

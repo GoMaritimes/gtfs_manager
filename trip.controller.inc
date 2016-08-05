@@ -105,11 +105,11 @@ class TripController extends DrupalDefaultEntityController {
     
     if (!empty($tids)) {
       if (sizeof($tids) > 1) {
-	$where = 't.tid in :tids';
-	$where_args = array(':tids' => '(' . join(',', $tids) . ')');
+	     $where = 't.tid in :tids';
+	     $where_args = array(':tids' => '(' . join(',', $tids) . ')');
       } else {
-	$where = 't.tid = :tid';
-	$where_args = array(':tid' => $tids[0]);
+	     $where = 't.tid = :tid';
+	     $where_args = array(':tid' => $tids[0]);
       }
     } else {
       $where = 't.rid = :rid';
@@ -156,7 +156,7 @@ class TripController extends DrupalDefaultEntityController {
     	if ($trip->sunday == 1) { $days['sunday'] = 'sunday'; }
     	$trip->days = $days;
 	
-	$trips[] = $trip;
+	   $trips[] = $trip;
       }
     }
     return $trips;

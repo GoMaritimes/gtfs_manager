@@ -210,8 +210,12 @@ function gtfs_manager_route_trips_view($route) {
   $variables['route'] = $route;
 
   $trips = trip_load_multiple(array(), array('rid', $route->rid, '='));
-  
+
   if (sizeof($trips > 0)) {
+    foreach ($trips as $trip) {
+      $trip->active_days = get_day_abbreviations($trip);    
+    }
+
     $variables['trips'] = $trips;
     return theme('gtfs_manager_route_trips_view', $variables);
   } else {
@@ -224,3 +228,22 @@ function trip_page_edit($trip) {
   return drupal_get_form('gtfs_manager_trip_form', $trip);
 }
 	  
+function get_day_abbreviations($trip) {
+  $day_map = array(
+    'monday' => 'M',
+    'tuesday' => 'T',
+    'wednesday' => 'W',
+    'thursday' => 'R',
+    'friday' => 'F',
+    'saturday' => 'S',
+    'sunday' => 'S',
+  );
+
+  $days = '';
+  foreach ($day_map as $key => $value) {
+    if ($trip->$key == 1) {
+      $days .= $value;
+    } 
+  }
+  return $days;
+}
